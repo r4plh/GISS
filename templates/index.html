@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Issues Search</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .animated {
+            animation: fadeIn 2s ease-in-out forwards;
+        }
+
+        .classic-note {
+            background-color: #fdf6e3;
+            color: #073642;
+            font-family: 'Times New Roman', serif;
+            border-left: 5px solid #2aa198;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .stats-container {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            animation: slideIn 0.5s ease-out forwards;
+            z-index: 1000;
+        }
+
+        .stat-card {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex justify-center items-center p-4">
+        <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+            <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">GitHub Issues Search</h1>
+            
+            <form action="/search" method="post" class="space-y-4">
+                <div>
+                    <label for="owner" class="block text-sm font-medium text-gray-700">Repository Owner</label>
+                    <input type="text" name="owner" id="owner" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" 
+                           placeholder="roboflow" required />
+                </div>
+
+                <div>
+                    <label for="repo" class="block text-sm font-medium text-gray-700">Repository Name</label>
+                    <input type="text" name="repo" id="repo" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" 
+                           placeholder="supervision" required />
+                </div>
+
+                <div>
+                    <label for="k" class="block text-sm font-medium text-gray-700">Number of Results (k)</label>
+                    <input type="number" name="k" id="k" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" 
+                           placeholder="3" required />
+                </div>
+
+                <div>
+                    <label for="token" class="block text-sm font-medium text-gray-700">GitHub Token (Optional)</label>
+                    <input type="text" name="token" id="token" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" 
+                           placeholder="ghp_XXXX..." />
+                </div>
+
+                <div>
+                    <label for="query" class="block text-sm font-medium text-gray-700">Search Query</label>
+                    <input type="text" name="query" id="query" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" 
+                           placeholder="What is mixed precision training?" required />
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">
+                    Search GitHub Issues
+                </button>
+            </form>
+
+            <p class="classic-note animated">
+                Note: GitHub's REST API considers every pull request an issue, but not every issue is a pull request. For this reason, "Issues" endpoints may return both issues and pull requests in the response. Don't worry, we have made work easy for you; our software does not consider the issues which are PRs. We have filtered the issues in a proper way so that your query can be resolved through issues. We consider issues that are solely issues, not PRs
+            </p>
+        </div>
+    </div>
+
+    <!-- Stats Container (Initially Hidden) -->
+    <div id="statsContainer" class="stats-container hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 space-y-4">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Repository Statistics</h2>
+            <div id="loadingSpinner" class="flex justify-center">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="statsContent" class="space-y-4 hidden">
+                <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between">
+                        <div class="text-blue-500">
+                            <i class="fas fa-chart-bar text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Total Issues</p>
+                            <p id="totalIssues" class="text-2xl font-bold text-blue-600">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <div class="text-green-500">
+                            <i class="fas fa-exclamation-circle text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Non-PR Issues</p>
+                            <p id="nonPrIssues" class="text-2xl font-bold text-green-600">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+                    <div class="flex items-center justify-between">
+                        <div class="text-purple-500">
+                            <i class="fas fa-code-branch text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Pull Requests</p>
+                            <p id="pullRequests" class="text-2xl font-bold text-purple-600">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeout;
+        const ownerInput = document.getElementById('owner');
+        const repoInput = document.getElementById('repo');
+        const statsContainer = document.getElementById('statsContainer');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const statsContent = document.getElementById('statsContent');
+
+        async function fetchStats() {
+            const owner = ownerInput.value.trim();
+            const repo = repoInput.value.trim();
+            
+            if (owner && repo) {
+                statsContainer.classList.remove('hidden');
+                loadingSpinner.classList.remove('hidden');
+                statsContent.classList.add('hidden');
+                
+                try {
+                    const response = await fetch(`/api/stats?owner=${owner}&repo=${repo}`);
+                    if (!response.ok) throw new Error('Failed to fetch stats');
+                    
+                    const data = await response.json();
+                    
+                    document.getElementById('totalIssues').textContent = data.total_issues;
+                    document.getElementById('nonPrIssues').textContent = data['total_issues(which are not PRs)'];
+                    document.getElementById('pullRequests').textContent = data.total_pull_requests;
+                    
+                    loadingSpinner.classList.add('hidden');
+                    statsContent.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error:', error);
+                    statsContainer.classList.add('hidden');
+                }
+            } else {
+                statsContainer.classList.add('hidden');
+            }
+        }
+
+        function debounce(func, wait) {
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        const debouncedFetchStats = debounce(fetchStats, 500);
+
+        ownerInput.addEventListener('input', debouncedFetchStats);
+        repoInput.addEventListener('input', debouncedFetchStats);
+    </script>
+</body>
+</html>

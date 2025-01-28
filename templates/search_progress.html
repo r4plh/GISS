@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Issue Search Progress</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked for Markdown Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.0/marked.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Main Content Area -->
+            <div class="md:w-3/4">
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h1 class="text-3xl font-bold mb-4 text-gray-800">Searching GitHub Issues</h1>
+                    <div class="mb-4 text-gray-700 space-y-1">
+                        <p><strong>Repository:</strong> {{ owner }}/{{ repo }}</p>
+                        <p><strong>Query:</strong> {{ query }}</p>
+                        <p><strong>Results Limit (k):</strong> {{ k }}</p>
+                    </div>
+                    <div id="progressContainer" class="mb-4 bg-gray-300 rounded-full h-3">
+                        <div id="progressBar" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div id="statusMessage" class="text-gray-600 mb-4">
+                        Initializing search...
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="resultsContainer" class="hidden mt-4">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-800">Search Results</h2>
+                        <div id="results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar / New Query Form -->
+            <div class="md:w-1/4">
+                <div class="bg-white shadow-md rounded-lg p-6 h-auto">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">New Query</h2>
+                    <p class="text-sm text-gray-600 mb-4">
+                        You can run another search for the same repository without leaving this page.
+                    </p>
+                    <form action="/search" method="post" class="space-y-4">
+                        <input type="hidden" name="owner" value="{{ owner }}" />
+                        <input type="hidden" name="repo" value="{{ repo }}" />
+                        <input type="hidden" name="token" value="{{ token }}" />
+                        <div>
+                            <label for="new_query" class="block text-sm font-medium text-gray-700">
+                                Enter next query
+                            </label>
+                            <input
+                                type="text"
+                                id="new_query"
+                                name="query"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                                placeholder="Type your next search..."
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label for="k" class="block text-sm font-medium text-gray-700">
+                                Number of Results (k)
+                            </label>
+                            <input
+                                type="number"
+                                name="k"
+                                id="k"
+                                value="{{ k }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                                required
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300"
+                        >
+                            Search Again
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating "Query Resolver with AI Bot" Button (bottom-right) -->
+    <button
+        id="openChatButton"
+        class="fixed bottom-5 right-5 bg-green-600 hover:bg-green-700 text-white py-3 px-6 text-lg rounded-full shadow-lg hidden"
+        title="Resolve queries with AI"
+    >
+        Query Resolver with AI Bot
+    </button>
+
+    <!-- Floating Chat Widget -->
+    <div
+        id="chatWidget"
+        class="hidden fixed bottom-20 right-5 w-80 max-h-[70vh] bg-white border border-gray-300 rounded shadow-lg
+               flex flex-col"
+    >
+        <!-- Chat Header -->
+        <div class="p-3 border-b border-gray-300 bg-gray-100 flex items-center justify-between">
+            <h2 class="text-base font-bold text-gray-700">
+                Query Resolver with AI Bot
+            </h2>
+            <button
+                id="closeChatWidget"
+                class="text-gray-500 hover:text-gray-700 font-bold text-lg"
+                title="Close"
+            >
+                ×
+            </button>
+        </div>
+
+        <!-- Chat Messages (scrollable) -->
+        <div
+            id="chatMessages"
+            class="p-3 overflow-y-auto flex-1 text-sm space-y-2 text-gray-800"
+        >
+            <!-- Chat content (bubbles) will be appended here -->
+        </div>
+
+        <!-- Chat Input (pinned at the bottom) -->
+        <div class="p-3 border-t border-gray-300 bg-gray-50">
+            <form id="chatForm" class="flex items-center space-x-2">
+                <input
+                    type="text"
+                    id="chatInput"
+                    class="flex-1 border border-gray-300 rounded px-2 py-1 
+                           focus:outline-none focus:border-blue-500"
+                    placeholder="Type your query..."
+                    required
+                />
+                <button
+                    type="submit"
+                    class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                >
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Variables passed from the server
+        const owner = "{{ owner }}";
+        const repo = "{{ repo }}";
+        const token = "{{ token }}";
+        const query = "{{ query }}";
+        const k = "{{ k }}";
+
+        // Elements for progress and results
+        const progressBar = document.getElementById('progressBar');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const results = document.getElementById('results');
+
+        // Chat elements
+        const openChatButton = document.getElementById('openChatButton');
+        const chatWidget = document.getElementById('chatWidget');
+        const closeChatWidget = document.getElementById('closeChatWidget');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+
+        // Store relevant issues for AI context
+        let relevantIssuesData = [];
+        // Conversation array: each item => { role: 'user'|'assistant', content: '...' }
+        let conversation = [];
+
+        // --- SSE Progress Logic ---
+        const progressStages = [
+            'Initializing search...',
+            'Fetching and processing issues from GitHub...',
+            'Generating embeddings...',
+            'Creating FAISS index...',
+            'Encoding user query and searching index...',
+            'Search complete. Preparing results...'
+        ];
+        let currentStage = 0;
+
+        function updateProgress() {
+            const totalStages = progressStages.length - 1;
+            const progress = (currentStage / totalStages) * 100;
+            progressBar.style.width = progress + '%';
+            statusMessage.textContent = progressStages[currentStage];
+            currentStage = Math.min(currentStage + 1, totalStages);
+        }
+
+        // Parse any text into Markdown HTML (if desired)
+        function renderMarkdown(text) {
+            return marked.parse(text || '');
+        }
+
+        // Display results in the UI
+        function displayResults(issueResults) {
+            // Reveal results container
+            resultsContainer.classList.remove('hidden');
+            statusMessage.textContent = 'Search results found!';
+            results.innerHTML = '';
+
+            issueResults.forEach(issue => {
+                const issueCard = document.createElement('div');
+                issueCard.className = 'bg-gray-50 border rounded-lg p-4 mb-4';
+                issueCard.innerHTML = `
+                    <h3 class="font-bold text-lg text-gray-800 mb-2">
+                        Title: ${issue.title} #${issue.number}
+                    </h3>
+                    <p class="mb-2">
+                        <strong>Link:</strong>
+                        <a href="${issue.html_url}" target="_blank" class="text-blue-600 hover:underline">
+                            View on GitHub
+                        </a>
+                    </p>
+                    <div class="prose max-w-none mb-4 text-sm text-gray-700">
+                        <strong>Body:</strong>
+                        ${renderMarkdown(issue.body)}
+                    </div>
+                    <div class="prose max-w-none pl-4 border-l-2 border-gray-300">
+                        <strong>Comments:</strong><br/>
+                        <div class="mt-2 p-2 bg-gray-100 rounded">
+                            ${renderMarkdown(issue.comments)}
+                        </div>
+                    </div>
+                `;
+                results.appendChild(issueCard);
+            });
+
+            // Show floating AI button once we have results
+            openChatButton.classList.remove('hidden');
+        }
+
+        // Initialize accumulated data for JSON parsing
+        let accumulatedData = '';
+
+        // Create SSE to get search progress and final data
+        const eventSource = new EventSource(
+            `/stream_progress?owner=${owner}&repo=${repo}&token=${token}&query=${encodeURIComponent(query)}&k=${k}`
+        );
+
+        eventSource.onmessage = function(event) {
+            console.log('Received event:', event.data);
+
+            if (event.data.startsWith('Error:')) {
+                statusMessage.textContent = event.data.replace('Error:', '').trim();
+                eventSource.close();
+                return;
+            }
+
+            // Check if event data is progress update or JSON data
+            if (!event.data.includes('{') && !event.data.includes('[')) {
+                // Treat as a progress update
+                updateProgress();
+            } else {
+                // Accumulate data for JSON parsing
+                accumulatedData += event.data;
+
+                // Attempt to parse the accumulated data
+                try {
+                    const issueResults = JSON.parse(accumulatedData);
+
+                    if (Array.isArray(issueResults)) {
+                        relevantIssuesData = issueResults; // store them for chat context
+                        displayResults(issueResults);
+                        eventSource.close();
+                    } else {
+                        throw new Error('Unexpected data format: Not an array');
+                    }
+                } catch (parseError) {
+                    console.warn('Incomplete or malformed JSON received, waiting for more data...');
+                    // Optionally, implement a timeout or a maximum wait time
+                }
+            }
+        };
+
+        eventSource.onerror = function(error) {
+            console.error('EventSource failed:', error);
+            statusMessage.textContent = 'An error occurred during search.';
+            eventSource.close();
+        };
+
+        // --- Floating Query Resolver Widget Logic ---
+        openChatButton.addEventListener('click', () => {
+            chatWidget.classList.remove('hidden');
+        });
+
+        closeChatWidget.addEventListener('click', () => {
+            chatWidget.classList.add('hidden');
+        });
+
+        function appendMessageToChat(role, message) {
+            // Create a chat bubble
+            const messageEl = document.createElement('div');
+            // Add base classes for styling + break-words to wrap long text
+            const bubbleClasses = 'p-2 rounded mb-2 break-words max-w-[80%] w-fit';
+
+            if (role === 'user') {
+                messageEl.className = 'bg-blue-100 text-gray-800 self-end ' + bubbleClasses;
+                messageEl.innerText = message; // user messages as plain text
+            } else {
+                // assistant
+                messageEl.className = 'bg-gray-200 text-gray-800 self-start ' + bubbleClasses;
+                // Render Markdown if you prefer:
+                // messageEl.innerHTML = renderMarkdown(message);
+                // Otherwise, plain text:
+                messageEl.innerText = message;
+            }
+            chatMessages.appendChild(messageEl);
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Handle chat form submission
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            // 1. Display user's message
+            appendMessageToChat('user', userMessage);
+            // 2. Add to conversation array
+            conversation.push({ role: 'user', content: userMessage });
+            chatInput.value = '';
+
+            try {
+                // 3. Send conversation + relevant issues to the server
+                const payload = {
+                    conversation: conversation,
+                    relevant_issues: relevantIssuesData
+                };
+                const response = await fetch('/ai_chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    appendMessageToChat('assistant', `Error: ${data.error}`);
+                } else {
+                    // 4. Get the assistant's response
+                    const assistantMsg = data.assistant_message;
+                    // 5. Add to conversation array
+                    conversation.push({ role: 'assistant', content: assistantMsg });
+                    // 6. Render in chat
+                    appendMessageToChat('assistant', assistantMsg);
+                }
+            } catch (err) {
+                console.error(err);
+                appendMessageToChat('assistant', 'Error occurred while communicating with AI.');
+            }
+        });
+    </script>
+</body>
+</html>
