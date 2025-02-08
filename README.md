@@ -65,16 +65,12 @@ Here’s a quick overview of how the project code is laid out:
 ├── app.py
 ├── data
 │   └── dataPipeline.py
-├── search.py
 ├── templates
 │   ├── index.html
 │   ├── search_progress.html
-│   └── ...
-├── static
-│   └── ...
+│
 ├── git-repos
-│   └── (cached JSON, embeddings.npy, and FAISS files go here)
-└── ...
+    └── (cached JSON, embeddings.npy, and FAISS files go here)
 ```
 
 - **app.py**: Main Flask application. This is where routes are defined, user input is handled, and streaming search results happen.
