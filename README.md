@@ -1,4 +1,3 @@
-```markdown
 # GitHub Issue Semantic Search Engine
 
 Welcome! This is my personal GitHub Issue Semantic Search Engine project. The main idea here is to allow anyone to come to the website, type in the owner and repository name, and then fetch all the GitHub issues from that repo. Once the issues are pulled locally, a semantic search is performed so that users can get results based on the meaning of their query—not just simple keyword matching. This is extremely helpful for those times when you type a question in your own words, and the normal GitHub search doesn’t pull up the right issue because it’s only looking for exact keywords.
@@ -43,7 +42,7 @@ Welcome! This is my personal GitHub Issue Semantic Search Engine project. The ma
   - Check if the GitHub context addresses the user’s query.
   - If yes, reference that context to answer in a concise, accurate way.
   - If not, politely say that the issues don’t fully answer the question and use its own knowledge base.
-- This is powered by the Gemini 1.5 flash model. The system instruction is:
+- This is powered by the Gemini 1.5 flash model
 
   ```
   "You are a conversational code query resolver expert. You have access to GitHub issues, 
