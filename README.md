@@ -206,4 +206,3 @@ That’s pretty much the whole flow. **Everything here is free** (though obvious
 
 If you have any questions or find any bugs, just open an issue or a pull request. Hope this helps you in exploring GitHub issues in a more semantic, user-friendly way!
 
-```
