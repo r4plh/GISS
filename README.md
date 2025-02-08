@@ -75,7 +75,6 @@ Here’s a quick overview of how the project code is laid out:
 
 - **app.py**: Main Flask application. This is where routes are defined, user input is handled, and streaming search results happen.
 - **data/dataPipeline.py**: Contains a class called `GitHubIssuesPipeline` that deals with fetching issues, filtering out PRs, exploding comments, and more.
-- **search.py**: For generating embeddings, creating a FAISS index, and performing searches on it.
 - **git-repos**: A local caching directory where JSON, embeddings, and FAISS index files are stored to avoid re-fetching the same repo repeatedly.
 
 ## Installation & Running Locally
