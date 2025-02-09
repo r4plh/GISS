@@ -63,6 +63,7 @@ Here’s a quick overview of how the project code is laid out:
 ```
 .
 ├── app.py
+├── search.py
 ├── data
 │   └── dataPipeline.py
 ├── templates
