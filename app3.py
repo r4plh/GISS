@@ -12,7 +12,7 @@ import logging
 import google.generativeai as genai
 
 # Configure your Gemini API key here
-genai.configure(api_key="AIzaSyApzTTlHcXv_5FerjepzEnDxqogc1Iq150")
+genai.configure(api_key="Enter-your-gemini-api-key")
 
 # Import your custom pipeline and search methods
 from data.dataPipeline import GitHubIssuesPipeline
