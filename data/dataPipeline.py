@@ -260,14 +260,4 @@ class GitHubIssuesPipeline:
         print(self._log_progress(f"Pipeline complete. Total time: {total_elapsed:.2f} seconds"))
         return final_concatenated_data
 
-# Example usage in a main script:
-if __name__ == "__main__":
-    owner = "huggingface"
-    repo = "datasets"
-    token = "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"
-    pipeline = GitHubIssuesPipeline(owner, repo, token, num_issues=100)
 
-    final_json_str = pipeline.run_full_pipeline()
-    with open("final_output.json", "w", encoding="utf-8") as f: f.write(final_json_str)
-    # `final_json_str` now contains the concatenated text for each row.
-    # Next steps: embed `final_json_str` text column using your favorite embedding library or model.
