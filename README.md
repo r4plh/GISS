@@ -208,10 +208,11 @@ That’s pretty much the whole flow. **Everything here is free** (though obvious
 If you have any questions or find any bugs, just open an issue or a pull request. Hope this helps you in exploring GitHub issues in a more semantic, user-friendly way!
 
 Some website snippets :
-![Form page(Info to be taken from user)](dump/Screenshot 2025-02-10 at 11.13.51 AM.png)
+Some website snippets :
+![Form page(Info to be taken from user)](dump/Screenshot%202025-02-10%20at%2011.13.51%20AM.png)
 
-![Search Screen](dump/Screenshot 2025-02-10 at 11.22.11 AM.png)
+![Search Screen](dump/Screenshot%202025-02-10%20at%2011.22.11%20AM.png)
 
-![AI Resolver Bot](dump/Screenshot 2025-02-10 at 11.22.40 AM.png)
+![AI Resolver Bot](dump/Screenshot%202025-02-10%20at%2011.22.40%20AM.png)
 
 
