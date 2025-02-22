@@ -1,6 +1,6 @@
 # GitHub Issue Semantic Search Engine
 
-Webiste DEMO LINK - [https://drive.google.com/file/d/1hI7EO-AhujOIqkH0U1-Ajmuq3F9TncD9/view?usp=sharing]
+Webiste DEMO LINK - [https://drive.google.com/file/d/1hI7EO-AhujOIqkH0U1-Ajmuq3F9TncD9/view?usp=sharing](GISS WEbiste DEMO Video Link)
 
 Welcome! This is my personal GitHub Issue Semantic Search Engine project. The main idea here is to allow anyone to come to the website, type in the owner and repository name, and then fetch all the GitHub issues from that repo. Once the issues are pulled locally, a semantic search is performed so that users can get results based on the meaning of their query—not just simple keyword matching. This is extremely helpful for those times when you type a question in your own words, and the normal GitHub search doesn’t pull up the right issue because it’s only looking for exact keywords.
 
